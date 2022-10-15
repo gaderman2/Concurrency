@@ -13,14 +13,25 @@ public class SumCalculator {
 
     private static final int GAP_RANGE = 100;
 
-    public int initializeCallables(int max) throws InterruptedException {
+    public int initializeCallables(int max){
         List<List<Integer>> list = splitIntoChunks(max, GAP_RANGE);
 
         ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(list.size());
         List<SumUpCallable> runnables = list.stream().map(SumUpCallable::new).toList();
-        List<Future<Integer>> sum = executor.invokeAll(runnables);
+        List<Future<Integer>> sum = null;
+        try {
+            sum = executor.invokeAll(runnables);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
-        return 0;
+        return sum.stream().mapToInt(x -> {
+            try {
+                return x.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }).sum();
     }
 
     private List<List<Integer>> splitIntoChunks(int max, int gap){
@@ -28,8 +39,14 @@ public class SumCalculator {
         System.out.println("Attempt to split list");
 
         for(int i = 0; i * gap < max; i++){
+            System.out.println("new split");
             list.add(new ArrayList<>());
-            for(int j = i; j < j + gap; j++) list.get(i).add(j);
+            for(int j = 1; j <= gap; j++){
+                if(j + (i * gap) > max) break;
+
+                list.get(i).add(j + (i * gap));
+                System.out.println(j + (i * gap));
+            }
         }
 
         return list;

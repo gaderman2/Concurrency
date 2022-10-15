@@ -11,7 +11,6 @@ public class SumUpCallable implements Callable<Integer>{
         this.sumUpList = sumUpList;
     }
 
-
     @Override
     public Integer call(){
         return sumUpList.stream().reduce(0, Integer::sum);
